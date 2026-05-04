@@ -15,3 +15,24 @@ Feature: Auth token generation
     Then status 200
     And match response.token == '#string'
     And match response.token != ''
+
+  Scenario Outline: Reject token generation with invalid login payloads
+    * def loginPayload = <payload>
+    Given path 'auth'
+    And request loginPayload
+    When method post
+    Then status 200
+    And match response == { reason: 'Bad credentials' }
+    And match response.token == '#notpresent'
+
+    Examples:
+      | payload                                             |
+      | { username: 'admin', password: 'wrong-password' }    |
+      | { username: 'invalid', password: 'password123' }     |
+      | { username: 'invalid', password: 'wrong-password' }  |
+      | { username: '', password: 'password123' }            |
+      | { username: 'admin', password: '' }                  |
+      | { username: '', password: '' }                       |
+      | { password: 'password123' }                          |
+      | { username: 'admin' }                                |
+      | {}                                                  |
