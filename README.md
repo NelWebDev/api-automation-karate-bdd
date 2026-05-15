@@ -2,7 +2,7 @@
 
 A small, professional base project for API test automation using Karate DSL, Maven, JUnit 5, and Gherkin-style feature files.
 
-This repository is intentionally focused on the first clean foundation for a QA Automation portfolio project. The current version covers only the authentication token generation flow for the Restful Booker API and is ready to grow later with booking CRUD scenarios.
+This repository is intentionally focused on a clean foundation for a QA Automation portfolio project. The current version covers authentication token generation and booking retrieval scenarios for the Restful Booker API.
 
 ## Why This Project Exists
 
@@ -26,39 +26,61 @@ https://restful-booker.herokuapp.com
 ## Current Test Coverage
 
 - Generate authentication token with valid credentials
+- Reject token generation with invalid login payloads
+- Retrieve all existing booking ids
+- Retrieve one booking by an existing id
 - Validate HTTP status code
-- Validate response body contains a valid token
+- Validate response body structure and key fields
 
 ## Project Structure
 
 ```text
 api-automation-karate-bdd/
-├── .github/
-│   └── workflows/
-│       └── karate-tests.yml
-├── src/
-│   └── test/
-│       ├── java/
-│       │   └── runners/
-│       │       └── KarateTestRunner.java
-│       └── resources/
-│           ├── karate-config.js
-│           ├── features/
-│           │   └── auth/
-│           │       └── create-token.feature
-│           └── data/
-│               └── auth-credentials.json
-├── pom.xml
-├── README.md
-└── .gitignore
+|-- .github/
+|   `-- workflows/
+|       `-- karate-tests.yml
+|-- src/
+|   `-- test/
+|       |-- java/
+|       |   `-- runners/
+|       |       `-- KarateTestRunner.java
+|       `-- resources/
+|           |-- karate-config.js
+|           |-- features/
+|           |   |-- auth/
+|           |   |   `-- create-token.feature
+|           |   `-- booking/
+|           |       |-- get-booking-by-id.feature
+|           |       `-- get-booking-ids.feature
+|           `-- data/
+|               `-- auth-credentials.json
+|-- pom.xml
+|-- README.md
+`-- .gitignore
 ```
 
 ## Run Tests Locally
 
-From the project root, run:
+This project requires Java 17 because Karate 1.5.1 is compiled for Java 17.
+
+From the project root, verify Maven is using Java 17:
+
+```bash
+mvn -version
+```
+
+Then run:
 
 ```bash
 mvn test
+```
+
+On Windows PowerShell, if Maven is still using another Java version, set `JAVA_HOME` for the current terminal session before running tests:
+
+```powershell
+$env:JAVA_HOME='C:\Program Files\Eclipse Adoptium\jdk-17.0.18.8-hotspot'
+$env:Path="$env:JAVA_HOME\bin;$env:Path"
+mvn clean test
 ```
 
 ## Run Tests With Environment
@@ -79,6 +101,12 @@ target/karate-reports/
 
 Open `target/karate-reports/karate-summary.html` in a browser to view the summary report after a local run.
 
+On Windows PowerShell:
+
+```powershell
+Start-Process ".\target\karate-reports\karate-summary.html"
+```
+
 ## CI/CD
 
 GitHub Actions is configured in `.github/workflows/karate-tests.yml`.
@@ -88,9 +116,7 @@ The workflow runs on pushes and pull requests to `main`, sets up Java 17 with Te
 ## Roadmap
 
 - Create booking
-- Get booking
 - Update booking
 - Delete booking
-- Negative authentication scenarios
 - Schema validation
 - Data-driven scenarios
