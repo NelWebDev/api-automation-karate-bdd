@@ -28,6 +28,7 @@ https://restful-booker.herokuapp.com
 - Generate authentication token with valid credentials
 - Reject token generation with invalid login payloads
 - Retrieve all existing booking ids
+- Retrieve booking ids filtered by single and combined query parameters: firstname, lastname, checkin, and checkout
 - Retrieve one booking by an existing id
 - Validate HTTP status code
 - Validate response body structure and key fields
@@ -51,6 +52,7 @@ api-automation-karate-bdd/
 |           |   |   `-- create-token.feature
 |           |   `-- booking/
 |           |       |-- get-booking-by-id.feature
+|           |       |-- get-booking-ids-by-filter.feature
 |           |       `-- get-booking-ids.feature
 |           `-- data/
 |               `-- auth-credentials.json
@@ -119,4 +121,4 @@ The workflow runs on pushes and pull requests to `main`, sets up Java 17 with Te
 - Update booking
 - Delete booking
 - Schema validation
-- Data-driven scenarios
+- Additional data-driven scenarios
