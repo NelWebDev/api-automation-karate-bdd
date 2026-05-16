@@ -6,8 +6,8 @@ function fn() {
     baseUrl: 'https://restful-booker.herokuapp.com'
   };
 
-  karate.configure('connectTimeout', 5000);
-  karate.configure('readTimeout', 5000);
+  karate.configure('connectTimeout', 10000);
+  karate.configure('readTimeout', 10000);
 
   return config;
 }
