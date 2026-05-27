@@ -25,8 +25,52 @@ jobs:
           java-version: '17'
           cache: maven
 
-      - name: Run API tests
-        run: mvn -B test -Dkarate.env=dev
+      - name: Run API tests excluding known bugs
+        run: mvn -B test -Dkarate.env=dev "-Dkarate.options=--tags ~@knownBug"
+
+      - name: Collect stable test reports
+        if: always()
+        run: |
+          mkdir -p target/ci-reports/stable
+          cp -R target/karate-reports target/ci-reports/stable/karate-reports || true
+          cp -R target/surefire-reports target/ci-reports/stable/surefire-reports || true
+
+      - name: Run known API bug checks
+        if: always()
+        id: known_bugs
+        continue-on-error: true
+        run: mvn -B test -Dkarate.env=dev "-Dkarate.options=--tags @knownBug"
+
+      - name: Collect known bug reports
+        if: always()
+        run: |
+          mkdir -p target/ci-reports/known-bugs
+          cp -R target/karate-reports target/ci-reports/known-bugs/karate-reports || true
+          cp -R target/surefire-reports target/ci-reports/known-bugs/surefire-reports || true
+
+      - name: Publish known bug summary
+        if: always()
+        run: |
+          {
+            echo "## Known API bug checks"
+            echo ""
+            echo "Known bug step outcome: \`${{ steps.known_bugs.outcome }}\`"
+            echo ""
+            echo "The \`@knownBug\` scenarios are expected to fail until Restful Booker handles invalid create-booking payloads with \`400 Bad Request\`."
+            echo ""
+            echo "| Bug id | Field | Expected | Current behavior |"
+            echo "| --- | --- | --- | --- |"
+            echo "| \`@BUG-001\` | \`firstname\` | \`400 Bad Request\` | Returns \`500 Internal Server Error\` |"
+            echo "| \`@BUG-002\` | \`lastname\` | \`400 Bad Request\` | Returns \`500 Internal Server Error\` |"
+            echo "| \`@BUG-003\` | \`totalprice\` | \`400 Bad Request\` | Returns \`200 OK\` and creates the booking |"
+            echo "| \`@BUG-004\` | \`depositpaid\` | \`400 Bad Request\` | Returns \`200 OK\` and creates the booking |"
+            echo "| \`@BUG-005\` | \`bookingdates\` | \`400 Bad Request\` | Returns \`500 Internal Server Error\` |"
+            echo "| \`@BUG-006\` | \`bookingdates.checkin\` | \`400 Bad Request\` | Returns \`200 OK\` and creates the booking |"
+            echo "| \`@BUG-007\` | \`bookingdates.checkout\` | \`400 Bad Request\` | Returns \`200 OK\` and creates the booking |"
+            echo "| \`@BUG-008\` | \`additionalneeds\` | \`400 Bad Request\` | Returns \`200 OK\` and creates the booking |"
+            echo ""
+            echo "Download the \`karate-reports\` artifact and open \`known-bugs/karate-reports/karate-summary.html\` for the detailed evidence."
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload Karate reports
         if: always()
@@ -34,6 +78,5 @@ jobs:
         with:
           name: karate-reports
           path: |
-            target/karate-reports/
-            target/surefire-reports/
+            target/ci-reports/
           if-no-files-found: warn

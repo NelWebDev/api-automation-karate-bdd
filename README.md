@@ -2,7 +2,7 @@
 
 A small, professional base project for API test automation using Karate DSL, Maven, JUnit 5, and Gherkin-style feature files.
 
-This repository is intentionally focused on a clean foundation for a QA Automation portfolio project. The current version covers authentication token generation and booking retrieval scenarios for the Restful Booker API.
+This repository is intentionally focused on a clean foundation for a QA Automation portfolio project. The current version covers authentication token generation, booking retrieval, booking creation, and negative contract checks for the Restful Booker API.
 
 ## Why This Project Exists
 
@@ -30,6 +30,8 @@ https://restful-booker.herokuapp.com
 - Retrieve all existing booking ids
 - Retrieve booking ids filtered by single and combined query parameters: firstname, lastname, checkin, and checkout
 - Retrieve one booking by an existing id
+- Create booking with a valid JSON payload
+- Validate negative create booking scenarios with invalid field data types
 - Validate HTTP status code
 - Validate response body structure and key fields
 
@@ -51,15 +53,38 @@ api-automation-karate-bdd/
 |           |   |-- auth/
 |           |   |   `-- create-token.feature
 |           |   `-- booking/
+|           |       |-- create-booking.feature
 |           |       |-- get-booking-by-id.feature
 |           |       |-- get-booking-ids-by-filter.feature
 |           |       `-- get-booking-ids.feature
 |           `-- data/
-|               `-- auth-credentials.json
+|               |-- auth-credentials.json
+|               `-- create-booking-payload.json
 |-- pom.xml
 |-- README.md
 `-- .gitignore
 ```
+
+## Known API Bugs
+
+Restful Booker is a public API playground for API testing practice. Its own landing page states that it is intentionally loaded with bugs to explore.
+
+The `create-booking.feature` file includes negative contract tests for invalid JSON field data types. These scenarios expect `400 Bad Request`, because the request body is syntactically valid JSON but violates the API contract for field types.
+
+The current API behavior does not return `400` for these cases. The scenarios are tagged as `@negative @knownBug` plus a traceable bug id:
+
+| Bug id | Field | Expected | Actual behavior |
+| --- | --- | --- | --- |
+| `@BUG-001` | `firstname` | `400 Bad Request` | Returns `500 Internal Server Error` |
+| `@BUG-002` | `lastname` | `400 Bad Request` | Returns `500 Internal Server Error` |
+| `@BUG-003` | `totalprice` | `400 Bad Request` | Returns `200 OK` and creates the booking |
+| `@BUG-004` | `depositpaid` | `400 Bad Request` | Returns `200 OK` and creates the booking |
+| `@BUG-005` | `bookingdates` | `400 Bad Request` | Returns `500 Internal Server Error` |
+| `@BUG-006` | `bookingdates.checkin` | `400 Bad Request` | Returns `200 OK` and creates the booking |
+| `@BUG-007` | `bookingdates.checkout` | `400 Bad Request` | Returns `200 OK` and creates the booking |
+| `@BUG-008` | `additionalneeds` | `400 Bad Request` | Returns `200 OK` and creates the booking |
+
+These tests are intentionally kept failing when all tests are executed. A failing `@knownBug` test documents a real API defect instead of changing the assertion to match incorrect behavior.
 
 ## Run Tests Locally
 
@@ -75,6 +100,18 @@ Then run:
 
 ```bash
 mvn test
+```
+
+To run the suite without known API bugs:
+
+```bash
+mvn test -Dkarate.options="--tags ~@knownBug"
+```
+
+To run only the known API bugs:
+
+```bash
+mvn test -Dkarate.options="--tags @knownBug"
 ```
 
 On Windows PowerShell, if Maven is still using another Java version, set `JAVA_HOME` for the current terminal session before running tests:
@@ -113,11 +150,29 @@ Start-Process ".\target\karate-reports\karate-summary.html"
 
 GitHub Actions is configured in `.github/workflows/karate-tests.yml`.
 
-The workflow runs on pushes and pull requests to `main`, sets up Java 17 with Temurin, caches Maven dependencies, runs the Karate test suite, and uploads the generated Karate reports as a workflow artifact.
+The workflow runs on pushes and pull requests to `main`, sets up Java 17 with Temurin, caches Maven dependencies, runs Karate, and uploads the generated reports as a workflow artifact.
+
+CI uses two separate executions:
+
+- Stable regression suite: runs all tests except `@knownBug` scenarios. This keeps CI meaningful for new regressions.
+- Known API bug checks: runs only `@knownBug` scenarios with `continue-on-error`. These checks are expected to fail until the API is fixed, but they still generate Karate evidence and a GitHub Actions summary for the development team.
+
+The uploaded `karate-reports` artifact contains separate folders:
+
+```text
+target/ci-reports/
+|-- stable/
+|   |-- karate-reports/
+|   `-- surefire-reports/
+`-- known-bugs/
+    |-- karate-reports/
+    `-- surefire-reports/
+```
+
+Open `known-bugs/karate-reports/karate-summary.html` to review the detected API defects.
 
 ## Roadmap
 
-- Create booking
 - Update booking
 - Delete booking
 - Schema validation
