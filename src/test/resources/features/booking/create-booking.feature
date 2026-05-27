@@ -34,3 +34,91 @@ Feature: Create booking
         }
       }
       """
+
+  @negative @knownBug @BUG-001
+  Scenario: Reject booking creation when firstname has an invalid data type
+    * copy invalidBookingPayload = bookingPayload
+    * set invalidBookingPayload.firstname = 123
+    Given path 'booking'
+    And header Content-Type = 'application/json'
+    And header Accept = 'application/json'
+    And request invalidBookingPayload
+    When method post
+    Then status 400
+
+  @negative @knownBug @BUG-002
+  Scenario: Reject booking creation when lastname has an invalid data type
+    * copy invalidBookingPayload = bookingPayload
+    * set invalidBookingPayload.lastname = 123
+    Given path 'booking'
+    And header Content-Type = 'application/json'
+    And header Accept = 'application/json'
+    And request invalidBookingPayload
+    When method post
+    Then status 400
+
+  @negative @knownBug @BUG-003
+  Scenario: Reject booking creation when totalprice has an invalid data type
+    * copy invalidBookingPayload = bookingPayload
+    * set invalidBookingPayload.totalprice = 'abc'
+    Given path 'booking'
+    And header Content-Type = 'application/json'
+    And header Accept = 'application/json'
+    And request invalidBookingPayload
+    When method post
+    Then status 400
+
+  @negative @knownBug @BUG-004
+  Scenario: Reject booking creation when depositpaid has an invalid data type
+    * copy invalidBookingPayload = bookingPayload
+    * set invalidBookingPayload.depositpaid = 'abc'
+    Given path 'booking'
+    And header Content-Type = 'application/json'
+    And header Accept = 'application/json'
+    And request invalidBookingPayload
+    When method post
+    Then status 400
+
+  @negative @knownBug @BUG-005
+  Scenario: Reject booking creation when bookingdates has an invalid data type
+    * copy invalidBookingPayload = bookingPayload
+    * set invalidBookingPayload.bookingdates = '2018-01-01 to 2019-01-01'
+    Given path 'booking'
+    And header Content-Type = 'application/json'
+    And header Accept = 'application/json'
+    And request invalidBookingPayload
+    When method post
+    Then status 400
+
+  @negative @knownBug @BUG-006
+  Scenario: Reject booking creation when checkin has an invalid data type
+    * copy invalidBookingPayload = bookingPayload
+    * set invalidBookingPayload.bookingdates.checkin = 20180101
+    Given path 'booking'
+    And header Content-Type = 'application/json'
+    And header Accept = 'application/json'
+    And request invalidBookingPayload
+    When method post
+    Then status 400
+
+  @negative @knownBug @BUG-007
+  Scenario: Reject booking creation when checkout has an invalid data type
+    * copy invalidBookingPayload = bookingPayload
+    * set invalidBookingPayload.bookingdates.checkout = 20190101
+    Given path 'booking'
+    And header Content-Type = 'application/json'
+    And header Accept = 'application/json'
+    And request invalidBookingPayload
+    When method post
+    Then status 400
+
+  @negative @knownBug @BUG-008
+  Scenario: Reject booking creation when additionalneeds has an invalid data type
+    * copy invalidBookingPayload = bookingPayload
+    * set invalidBookingPayload.additionalneeds = 123
+    Given path 'booking'
+    And header Content-Type = 'application/json'
+    And header Accept = 'application/json'
+    And request invalidBookingPayload
+    When method post
+    Then status 400
