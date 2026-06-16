@@ -2,7 +2,7 @@
 
 A small, professional base project for API test automation using Karate DSL, Maven, JUnit 5, and Gherkin-style feature files.
 
-This repository is intentionally focused on a clean foundation for a QA Automation portfolio project. The current version covers authentication token generation, booking retrieval, booking creation, booking update, and negative contract checks for the Restful Booker API.
+This repository is intentionally focused on a clean foundation for a QA Automation portfolio project. The current version covers authentication token generation, booking retrieval, booking creation, booking update, booking deletion, and negative contract checks for the Restful Booker API.
 
 ## Why This Project Exists
 
@@ -32,6 +32,7 @@ https://restful-booker.herokuapp.com
 - Retrieve one booking by an existing id
 - Create booking with a valid JSON payload
 - Update an existing booking with a valid JSON payload and token authentication
+- Delete an existing booking with token authentication
 - Validate negative create booking scenarios with invalid field data types
 - Validate HTTP status code
 - Validate response body structure and key fields
@@ -55,6 +56,7 @@ api-automation-karate-bdd/
 |           |   |   `-- create-token.feature
 |           |   `-- booking/
 |           |       |-- create-booking.feature
+|           |       |-- delete-booking.feature
 |           |       |-- get-booking-by-id.feature
 |           |       |-- get-booking-ids-by-filter.feature
 |           |       |-- get-booking-ids.feature
@@ -176,6 +178,5 @@ Open `known-bugs/karate-reports/karate-summary.html` to review the detected API 
 
 ## Roadmap
 
-- Delete booking
 - Schema validation
 - Additional data-driven scenarios
