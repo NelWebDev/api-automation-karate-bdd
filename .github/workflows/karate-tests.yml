@@ -26,7 +26,7 @@ jobs:
           cache: maven
 
       - name: Run API tests excluding known bugs
-        run: mvn -B test -Dkarate.env=dev "-Dkarate.options=--tags ~@knownBug"
+        run: bash ./mvnw -B test -Dkarate.env=dev "-Dkarate.options=--tags ~@knownBug"
 
       - name: Collect stable test reports
         if: always()
@@ -39,7 +39,7 @@ jobs:
         if: always()
         id: known_bugs
         continue-on-error: true
-        run: mvn -B test -Dkarate.env=dev "-Dkarate.options=--tags @knownBug"
+        run: bash ./mvnw -B test -Dkarate.env=dev "-Dkarate.options=--tags @knownBug"
 
       - name: Collect known bug reports
         if: always()
@@ -58,16 +58,7 @@ jobs:
             echo ""
             echo "The \`@knownBug\` scenarios are expected to fail until Restful Booker handles invalid create-booking payloads with \`400 Bad Request\`."
             echo ""
-            echo "| Bug id | Field | Expected | Current behavior |"
-            echo "| --- | --- | --- | --- |"
-            echo "| \`@BUG-001\` | \`firstname\` | \`400 Bad Request\` | Returns \`500 Internal Server Error\` |"
-            echo "| \`@BUG-002\` | \`lastname\` | \`400 Bad Request\` | Returns \`500 Internal Server Error\` |"
-            echo "| \`@BUG-003\` | \`totalprice\` | \`400 Bad Request\` | Returns \`200 OK\` and creates the booking |"
-            echo "| \`@BUG-004\` | \`depositpaid\` | \`400 Bad Request\` | Returns \`200 OK\` and creates the booking |"
-            echo "| \`@BUG-005\` | \`bookingdates\` | \`400 Bad Request\` | Returns \`500 Internal Server Error\` |"
-            echo "| \`@BUG-006\` | \`bookingdates.checkin\` | \`400 Bad Request\` | Returns \`200 OK\` and creates the booking |"
-            echo "| \`@BUG-007\` | \`bookingdates.checkout\` | \`400 Bad Request\` | Returns \`200 OK\` and creates the booking |"
-            echo "| \`@BUG-008\` | \`additionalneeds\` | \`400 Bad Request\` | Returns \`200 OK\` and creates the booking |"
+            echo "The canonical bug list is maintained in README.md to avoid duplicated documentation."
             echo ""
             echo "Download the \`karate-reports\` artifact and open \`known-bugs/karate-reports/karate-summary.html\` for the detailed evidence."
           } >> "$GITHUB_STEP_SUMMARY"
