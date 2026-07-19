@@ -1,182 +1,142 @@
 # API Automation Karate BDD
 
-A small, professional base project for API test automation using Karate DSL, Maven, JUnit 5, and Gherkin-style feature files.
+API test automation portfolio project built with Karate DSL, Maven, JUnit 5 and Java 17. It exercises the public [Restful Booker](https://restful-booker.herokuapp.com) API with isolated test data, reusable setup helpers, cleanup and CI reporting.
 
-This repository is intentionally focused on a clean foundation for a QA Automation portfolio project. The current version covers authentication token generation, booking retrieval, booking creation, booking update, booking deletion, and negative contract checks for the Restful Booker API.
+## Test coverage
 
-## Why This Project Exists
+- Authentication with valid and invalid credentials
+- Retrieve all booking ids and retrieve a booking by id
+- Filter by firstname, lastname, check-in and checkout dates
+- Create, fully update and delete a booking
+- Reject update and delete requests with missing or invalid authentication
+- Response structure, data types and ISO date validation
+- Negative contract tests for known upstream API defects
 
-The goal of this project is to demonstrate readable API automation practices with clear BDD/Gherkin scenarios, simple test data management, CI execution, and report generation without over-engineering the first version.
+Tests that create valid bookings use unique data and delete those records when the scenario completes. Filter scenarios retry for a bounded period because the public API indexes newly created bookings asynchronously.
 
-Target API:
+## Technology
 
-```text
-https://restful-booker.herokuapp.com
-```
-
-## Tech Stack
-
-- Karate DSL
-- Maven
+- Karate 1.5.1
 - JUnit 5
 - Java 17
-- Gherkin-style feature files
+- Maven Wrapper 3.9.9
 - GitHub Actions
 
-## Current Test Coverage
+The Maven Enforcer plugin fails early when Maven is not running on JDK 17, and the compiler uses `release=17` for a reproducible bytecode target.
 
-- Generate authentication token with valid credentials
-- Reject token generation with invalid login payloads
-- Retrieve all existing booking ids
-- Retrieve booking ids filtered by single and combined query parameters: firstname, lastname, checkin, and checkout
-- Retrieve one booking by an existing id
-- Create booking with a valid JSON payload
-- Update an existing booking with a valid JSON payload and token authentication
-- Delete an existing booking with token authentication
-- Validate negative create booking scenarios with invalid field data types
-- Validate HTTP status code
-- Validate response body structure and key fields
-
-## Project Structure
+## Project structure
 
 ```text
-api-automation-karate-bdd/
-|-- .github/
-|   `-- workflows/
-|       `-- karate-tests.yml
-|-- src/
-|   `-- test/
-|       |-- java/
-|       |   `-- runners/
-|       |       `-- KarateTestRunner.java
-|       `-- resources/
-|           |-- karate-config.js
-|           |-- features/
-|           |   |-- auth/
-|           |   |   `-- create-token.feature
-|           |   `-- booking/
-|           |       |-- create-booking.feature
-|           |       |-- delete-booking.feature
-|           |       |-- get-booking-by-id.feature
-|           |       |-- get-booking-ids-by-filter.feature
-|           |       |-- get-booking-ids.feature
-|           |       `-- update-booking.feature
-|           `-- data/
-|               |-- auth-credentials.json
-|               |-- create-booking-payload.json
-|               `-- update-booking-payload.json
-|-- pom.xml
-|-- README.md
-`-- .gitignore
+.
+|-- .github/workflows/karate-tests.yml
+|-- .mvn/wrapper/maven-wrapper.properties
+|-- src/test/java/runners/KarateTestRunner.java
+|-- src/test/resources/
+|   |-- karate-config.js
+|   |-- data/
+|   `-- features/
+|       |-- auth/
+|       |-- booking/
+|       `-- helpers/
+|           |-- cleanup-created-booking.feature
+|           |-- create-booking.feature
+|           |-- create-token.feature
+|           `-- delete-booking.feature
+|-- mvnw
+|-- mvnw.cmd
+`-- pom.xml
 ```
 
-## Known API Bugs
+Helper features are tagged `@ignore`: the runner does not execute them as standalone tests, but scenarios can reuse them with `call` or `callonce`.
 
-Restful Booker is a public API playground for API testing practice. Its own landing page states that it is intentionally loaded with bugs to explore.
+## Requirements
 
-The `create-booking.feature` file includes negative contract tests for invalid JSON field data types. These scenarios expect `400 Bad Request`, because the request body is syntactically valid JSON but violates the API contract for field types.
+- JDK 17 available through `JAVA_HOME`
+- Internet access to Restful Booker and Maven Central
 
-The current API behavior does not return `400` for these cases. The scenarios are tagged as `@negative @knownBug` plus a traceable bug id:
-
-| Bug id | Field | Expected | Actual behavior |
-| --- | --- | --- | --- |
-| `@BUG-001` | `firstname` | `400 Bad Request` | Returns `500 Internal Server Error` |
-| `@BUG-002` | `lastname` | `400 Bad Request` | Returns `500 Internal Server Error` |
-| `@BUG-003` | `totalprice` | `400 Bad Request` | Returns `200 OK` and creates the booking |
-| `@BUG-004` | `depositpaid` | `400 Bad Request` | Returns `200 OK` and creates the booking |
-| `@BUG-005` | `bookingdates` | `400 Bad Request` | Returns `500 Internal Server Error` |
-| `@BUG-006` | `bookingdates.checkin` | `400 Bad Request` | Returns `200 OK` and creates the booking |
-| `@BUG-007` | `bookingdates.checkout` | `400 Bad Request` | Returns `200 OK` and creates the booking |
-| `@BUG-008` | `additionalneeds` | `400 Bad Request` | Returns `200 OK` and creates the booking |
-
-These tests are intentionally kept failing when all tests are executed. A failing `@knownBug` test documents a real API defect instead of changing the assertion to match incorrect behavior.
-
-## Run Tests Locally
-
-This project requires Java 17 because Karate 1.5.1 is compiled for Java 17.
-
-From the project root, verify Maven is using Java 17:
+Verify the Java runtime used by Maven:
 
 ```bash
-mvn -version
+bash ./mvnw -version
 ```
-
-Then run:
-
-```bash
-mvn test
-```
-
-To run the suite without known API bugs:
-
-```bash
-mvn test -Dkarate.options="--tags ~@knownBug"
-```
-
-To run only the known API bugs:
-
-```bash
-mvn test -Dkarate.options="--tags @knownBug"
-```
-
-On Windows PowerShell, if Maven is still using another Java version, set `JAVA_HOME` for the current terminal session before running tests:
-
-```powershell
-$env:JAVA_HOME='C:\Program Files\Eclipse Adoptium\jdk-17.0.18.8-hotspot'
-$env:Path="$env:JAVA_HOME\bin;$env:Path"
-mvn clean test
-```
-
-## Run Tests With Environment
-
-The default environment is `dev`. You can also pass it explicitly:
-
-```bash
-mvn test -Dkarate.env=dev
-```
-
-## Reports
-
-Karate reports are generated after test execution in:
-
-```text
-target/karate-reports/
-```
-
-Open `target/karate-reports/karate-summary.html` in a browser to view the summary report after a local run.
 
 On Windows PowerShell:
 
 ```powershell
-Start-Process ".\target\karate-reports\karate-summary.html"
+.\mvnw.cmd -version
 ```
 
-## CI/CD
+If Maven reports another Java version, correct `JAVA_HOME`. For example:
 
-GitHub Actions is configured in `.github/workflows/karate-tests.yml`.
+```powershell
+$env:JAVA_HOME='C:\Program Files\Eclipse Adoptium\jdk-17.0.18.8-hotspot'
+$env:Path="$env:JAVA_HOME\bin;$env:Path"
+```
 
-The workflow runs on pushes and pull requests to `main`, sets up Java 17 with Temurin, caches Maven dependencies, runs Karate, and uploads the generated reports as a workflow artifact.
+## Running tests
 
-CI uses two separate executions:
+Stable regression suite:
 
-- Stable regression suite: runs all tests except `@knownBug` scenarios. This keeps CI meaningful for new regressions.
-- Known API bug checks: runs only `@knownBug` scenarios with `continue-on-error`. These checks are expected to fail until the API is fixed, but they still generate Karate evidence and a GitHub Actions summary for the development team.
+```bash
+bash ./mvnw clean test -Dkarate.options="--tags ~@knownBug"
+```
 
-The uploaded `karate-reports` artifact contains separate folders:
+PowerShell equivalent:
+
+```powershell
+.\mvnw.cmd clean test '-Dkarate.options=--tags ~@knownBug'
+```
+
+Known upstream defects only:
+
+```bash
+bash ./mvnw test -Dkarate.options="--tags @knownBug"
+```
+
+The default environment is `dev`. It can be selected explicitly:
+
+```bash
+bash ./mvnw test -Dkarate.env=dev
+```
+
+Override the configured API URL without editing the repository:
+
+```bash
+bash ./mvnw test -DbaseUrl=https://example.test
+```
+
+Unknown `karate.env` values fail fast unless `baseUrl` is supplied.
+
+## Reports
+
+Karate generates its HTML summary at:
 
 ```text
-target/ci-reports/
-|-- stable/
-|   |-- karate-reports/
-|   `-- surefire-reports/
-`-- known-bugs/
-    |-- karate-reports/
-    `-- surefire-reports/
+target/karate-reports/karate-summary.html
 ```
 
-Open `known-bugs/karate-reports/karate-summary.html` to review the detected API defects.
+The CI workflow executes the stable suite and known-bug suite separately. Both Karate and Surefire reports are uploaded under `target/ci-reports/`. Known-bug failures do not hide stable regressions.
+
+## Known upstream API bugs
+
+Restful Booker is an intentionally imperfect API playground. The negative creation scenarios expect `400 Bad Request` for syntactically valid JSON with invalid field types. The current service violates that contract:
+
+| Bug id | Field | Expected | Observed behavior |
+| --- | --- | --- | --- |
+| `@BUG-001` | `firstname` | `400` | `500` |
+| `@BUG-002` | `lastname` | `400` | `500` |
+| `@BUG-003` | `totalprice` | `400` | `200`, booking created |
+| `@BUG-004` | `depositpaid` | `400` | `200`, booking created |
+| `@BUG-005` | `bookingdates` | `400` | `500` |
+| `@BUG-006` | `bookingdates.checkin` | `400` | `200`, booking created |
+| `@BUG-007` | `bookingdates.checkout` | `400` | `200`, booking created |
+| `@BUG-008` | `additionalneeds` | `400` | `200`, booking created |
+
+These tests intentionally retain the correct expected contract and remain tagged `@knownBug`. If the API unexpectedly creates a booking, a helper deletes it before the contract assertion fails. CI runs these tests with `continue-on-error` and publishes their reports as evidence.
 
 ## Roadmap
 
-- Schema validation
-- Additional data-driven scenarios
+- Partial update (`PATCH`) coverage
+- Missing, `null` and malformed request bodies
+- Response-time thresholds
+- External JSON Schema validation

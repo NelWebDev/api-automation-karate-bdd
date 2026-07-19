@@ -1,100 +1,68 @@
 Feature: Get booking ids by filters
 
-  As an API consumer
-  I want to filter booking ids by search data
-  So that I can find bookings that match specific criteria
-
   Background:
     * url baseUrl
+    * def bookingPayload = read('classpath:data/create-booking-payload.json')
+    * set bookingPayload.firstname = 'Filter' + java.util.UUID.randomUUID().toString().replace('-', '').substring(0, 8)
+    * set bookingPayload.lastname = 'Test' + java.util.UUID.randomUUID().toString().replace('-', '').substring(0, 8)
+    * def created = call read('classpath:features/helpers/create-booking.feature') { bookingPayload: '#(bookingPayload)' }
+    * def bookingId = created.bookingId
+    * def booking = created.booking
+    * def tokenResult = callonce read('classpath:features/helpers/create-token.feature')
+    * def authToken = tokenResult.authToken
+    * configure retry = { count: 10, interval: 1000 }
 
+  Scenario Outline: Filter booking ids by name
     Given path 'booking'
+    And params <filters>
+    And retry until responseStatus == 200 && response.some(x => x.bookingid == bookingId)
     When method get
     Then status 200
     And match response == '#[]'
-    And def bookingId = response[0].bookingid
+    And match response contains { bookingid: '#(bookingId)' }
 
-    Given path 'booking', bookingId
-    And header Accept = 'application/json'
-    When method get
-    Then status 200
-    And def booking = response
+    * call read('classpath:features/helpers/delete-booking.feature') { bookingId: '#(bookingId)', authToken: '#(authToken)' }
 
-  Scenario: Filter booking ids by firstname
-    Given path 'booking'
-    And param firstname = booking.firstname
-    When method get
-    Then status 200
-    And match response == '#[]'
-    And match response contains { bookingid: #(bookingId) }
-
-  Scenario: Filter booking ids by lastname
-    Given path 'booking'
-    And param lastname = booking.lastname
-    When method get
-    Then status 200
-    And match response == '#[]'
-    And match response contains { bookingid: #(bookingId) }
-
-  Scenario: Filter booking ids by firstname and lastname
-    Given path 'booking'
-    And param firstname = booking.firstname
-    And param lastname = booking.lastname
-    When method get
-    Then status 200
-    And match response == '#[]'
-    And match response contains { bookingid: #(bookingId) }
+    Examples:
+      | filters                                                    |
+      | { firstname: '#(booking.firstname)' }                      |
+      | { lastname: '#(booking.lastname)' }                        |
+      | { firstname: '#(booking.firstname)', lastname: '#(booking.lastname)' } |
 
   Scenario: Filter booking ids by checkin date
-    * def checkinDate = booking.bookingdates.checkin
-
+    * def checkinDate = '2017-12-31'
     Given path 'booking'
     And param checkin = checkinDate
+    And retry until responseStatus == 200 && response.some(x => x.bookingid == bookingId)
     When method get
     Then status 200
-    And match response == '#[]'
-    And match response[0].bookingid == '#number'
-    And def filteredBookingId = response[0].bookingid
-
-    Given path 'booking', filteredBookingId
-    And header Accept = 'application/json'
-    When method get
-    Then status 200
-    And assert response.bookingdates.checkin >= checkinDate
+    And match response contains { bookingid: '#(bookingId)' }
+    * call read('classpath:features/helpers/delete-booking.feature') { bookingId: '#(bookingId)', authToken: '#(authToken)' }
 
   Scenario: Filter booking ids by checkout date
-    * def checkoutDate = booking.bookingdates.checkout
-
+    * def checkoutDate = '2019-01-02'
     Given path 'booking'
     And param checkout = checkoutDate
+    And retry until responseStatus == 200 && response.some(x => x.bookingid == bookingId)
     When method get
     Then status 200
-    And match response == '#[]'
-    And match response[0].bookingid == '#number'
-    And def filteredBookingId = response[0].bookingid
-
-    Given path 'booking', filteredBookingId
-    And header Accept = 'application/json'
-    When method get
-    Then status 200
-    And assert response.bookingdates.checkout >= checkoutDate
+    And match response contains { bookingid: '#(bookingId)' }
+    * call read('classpath:features/helpers/delete-booking.feature') { bookingId: '#(bookingId)', authToken: '#(authToken)' }
 
   Scenario: Filter booking ids by checkin and checkout dates
-    * def checkinDate = '1900-01-01'
-    * def checkoutDate = '9999-12-31'
-
     Given path 'booking'
-    And param checkin = checkinDate
-    And param checkout = checkoutDate
+    And param checkin = '2017-12-31'
+    And param checkout = '2019-01-02'
+    And retry until responseStatus == 200 && response.some(x => x.bookingid == bookingId)
     When method get
     Then status 200
-    And match response == '#[]'
-    And match each response contains { bookingid: '#number' }
-    And match response[0].bookingid == '#number'
-    And def filteredBookingId = response[0].bookingid
+    And match response contains { bookingid: '#(bookingId)' }
+    * call read('classpath:features/helpers/delete-booking.feature') { bookingId: '#(bookingId)', authToken: '#(authToken)' }
 
-    Given path 'booking', filteredBookingId
-    And header Accept = 'application/json'
+  Scenario: Return an empty list when name filters do not match
+    Given path 'booking'
+    And param firstname = 'DoesNotExist' + java.util.UUID.randomUUID().toString()
     When method get
     Then status 200
-    And assert response.bookingdates.checkin >= checkinDate
-    And assert response.bookingdates.checkout <= checkoutDate
+    And match response == []
+    * call read('classpath:features/helpers/delete-booking.feature') { bookingId: '#(bookingId)', authToken: '#(authToken)' }

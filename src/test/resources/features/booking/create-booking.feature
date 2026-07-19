@@ -7,6 +7,7 @@ Feature: Create booking
   Background:
     * url baseUrl
     * def bookingPayload = read('classpath:data/create-booking-payload.json')
+    * set bookingPayload.lastname = 'Create' + java.util.UUID.randomUUID().toString().replace('-', '').substring(0, 8)
 
   Scenario: Create a booking with valid JSON payload
     Given path 'booking'
@@ -35,6 +36,10 @@ Feature: Create booking
       }
       """
 
+    * def bookingId = response.bookingid
+    * def tokenResult = call read('classpath:features/helpers/create-token.feature')
+    * call read('classpath:features/helpers/delete-booking.feature') { bookingId: '#(bookingId)', authToken: '#(tokenResult.authToken)' }
+
   @negative @knownBug @BUG-001
   Scenario: Reject booking creation when firstname has an invalid data type
     * copy invalidBookingPayload = bookingPayload
@@ -44,6 +49,7 @@ Feature: Create booking
     And header Accept = 'application/json'
     And request invalidBookingPayload
     When method post
+    * if (responseStatus == 200) karate.call('classpath:features/helpers/cleanup-created-booking.feature', { bookingId: response.bookingid })
     Then status 400
 
   @negative @knownBug @BUG-002
@@ -55,6 +61,7 @@ Feature: Create booking
     And header Accept = 'application/json'
     And request invalidBookingPayload
     When method post
+    * if (responseStatus == 200) karate.call('classpath:features/helpers/cleanup-created-booking.feature', { bookingId: response.bookingid })
     Then status 400
 
   @negative @knownBug @BUG-003
@@ -66,6 +73,7 @@ Feature: Create booking
     And header Accept = 'application/json'
     And request invalidBookingPayload
     When method post
+    * if (responseStatus == 200) karate.call('classpath:features/helpers/cleanup-created-booking.feature', { bookingId: response.bookingid })
     Then status 400
 
   @negative @knownBug @BUG-004
@@ -77,6 +85,7 @@ Feature: Create booking
     And header Accept = 'application/json'
     And request invalidBookingPayload
     When method post
+    * if (responseStatus == 200) karate.call('classpath:features/helpers/cleanup-created-booking.feature', { bookingId: response.bookingid })
     Then status 400
 
   @negative @knownBug @BUG-005
@@ -88,6 +97,7 @@ Feature: Create booking
     And header Accept = 'application/json'
     And request invalidBookingPayload
     When method post
+    * if (responseStatus == 200) karate.call('classpath:features/helpers/cleanup-created-booking.feature', { bookingId: response.bookingid })
     Then status 400
 
   @negative @knownBug @BUG-006
@@ -99,6 +109,7 @@ Feature: Create booking
     And header Accept = 'application/json'
     And request invalidBookingPayload
     When method post
+    * if (responseStatus == 200) karate.call('classpath:features/helpers/cleanup-created-booking.feature', { bookingId: response.bookingid })
     Then status 400
 
   @negative @knownBug @BUG-007
@@ -110,6 +121,7 @@ Feature: Create booking
     And header Accept = 'application/json'
     And request invalidBookingPayload
     When method post
+    * if (responseStatus == 200) karate.call('classpath:features/helpers/cleanup-created-booking.feature', { bookingId: response.bookingid })
     Then status 400
 
   @negative @knownBug @BUG-008
@@ -121,4 +133,5 @@ Feature: Create booking
     And header Accept = 'application/json'
     And request invalidBookingPayload
     When method post
+    * if (responseStatus == 200) karate.call('classpath:features/helpers/cleanup-created-booking.feature', { bookingId: response.bookingid })
     Then status 400
